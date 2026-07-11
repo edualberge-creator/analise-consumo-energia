@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "Se este projeto for útil, cite-o usando estes metadados."
+title: "Analise estatistica aplicada ao perfil de consumo de energia residencial"
+type: software
+authors:
+  - family-names: "Alberge"
+    given-names: "Eduardo Augusto Rech"
+  - family-names: "Roik"
+    given-names: "Willian Matheus"
+year: 2025
+repository-code: "https://github.com/SEU-USUARIO/analise-consumo-energia"
+license: MIT
+abstract: "Repositorio reproduzivel em R para analise estatistica de consumo residencial de energia eletrica usando o dataset Individual household electric power consumption."

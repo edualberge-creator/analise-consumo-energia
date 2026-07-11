@@ -1,0 +1,218 @@
+---
+title: "Analise estatistica aplicada ao perfil de consumo de energia residencial"
+author:
+  - "Eduardo Augusto Rech Alberge"
+  - "Willian Matheus Roik"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r setup}
+source(here::here("R", "funcoes_auxiliares.R"))
+source(here::here("R", "analise_descritiva.R"))
+source(here::here("R", "inferencia_estatistica.R"))
+source(here::here("R", "modelagem_distribuicoes.R"))
+
+caminho_dados <- here::here("data", "processed", "dados_1ano_tratados.csv")
+dados_disponiveis <- file.exists(caminho_dados)
+
+if (dados_disponiveis) {
+  dados <- read.csv(caminho_dados, stringsAsFactors = FALSE)
+  dados$DateTime <- lubridate::ymd_hms(dados$DateTime, tz = "Europe/Paris")
+}
+```
+
+# Introducao
+
+A gestao eficiente do consumo de energia eletrica e um tema importante para a
+Engenharia Eletronica, especialmente em contextos de redes inteligentes,
+medicao em alta frequencia e planejamento de demanda.
+
+Este relatorio analisa medicoes minuto a minuto de uma residencia usando o
+dataset "Individual household electric power consumption", do UCI Machine
+Learning Repository.
+
+# Contexto de Engenharia
+
+A potencia ativa global indica a demanda eletrica instantanea da residencia. A
+tensao ajuda a avaliar a estabilidade do fornecimento, enquanto corrente e
+submedicoes permitem interpretar a composicao do consumo. Picos de demanda
+sao relevantes para dimensionamento de circuitos, condutores e dispositivos de
+protecao.
+
+# Objetivos
+
+Os objetivos sao:
+
+- caracterizar o consumo residencial por estatistica descritiva;
+- testar hipoteses sobre a media da potencia ativa;
+- comparar dias uteis e fins de semana;
+- ajustar distribuicoes probabilisticas;
+- estimar a probabilidade de a potencia ativa exceder 2 kW.
+
+# Descricao dos dados
+
+O arquivo bruto esperado e `data/raw/household_power_consumption.txt`. Ele usa
+separador `;` e representa valores ausentes com `?`.
+
+O recorte temporal usado no trabalho vai de 16/12/2006 17:24:00 a
+16/12/2007 17:24:00.
+
+```{r dados-status}
+if (!dados_disponiveis) {
+  cat("Dados processados nao encontrados. Execute source('scripts/preparar_dados.R') antes de renderizar os resultados numericos.\n")
+} else {
+  cat("Observacoes processadas:", nrow(dados), "\n")
+  cat("Primeiro instante:", format(min(dados$DateTime)), "\n")
+  cat("Ultimo instante:", format(max(dados$DateTime)), "\n")
+}
+```
+
+# Preparacao e limpeza
+
+A preparacao combina `Date` e `Time` em `DateTime`, converte as variaveis
+quantitativas, filtra o periodo do trabalho, remove valores ausentes nas
+variaveis principais, verifica duplicados e ordena os registros
+cronologicamente.
+
+```{r log-preparacao}
+caminho_log <- here::here("outputs", "tables", "log_preparacao.csv")
+if (file.exists(caminho_log)) {
+  read.csv(caminho_log)
+} else {
+  cat("Log de preparacao ainda nao gerado.\n")
+}
+```
+
+# Analise descritiva
+
+```{r analise-descritiva}
+if (dados_disponiveis) {
+  resumo <- analise_descritiva(dados)
+  resumo
+}
+```
+
+```{r submedicoes}
+if (dados_disponiveis) {
+  medias_submedicoes(dados)
+}
+```
+
+# Inferencia estatistica
+
+## Intervalo de confianca
+
+```{r ic-media}
+if (dados_disponiveis) {
+  ic_media <- inferir_media_potencia(dados)
+  ic_media
+}
+```
+
+## Teste t bilateral contra 1,10 kW
+
+O teste compara a media da potencia ativa global com a referencia de 1,10 kW.
+Com amostras muito grandes, mesmo diferencas pequenas podem produzir
+p-valores muito baixos. Por isso, a interpretacao deve considerar tambem a
+relevancia pratica.
+
+# Dias uteis vs. fins de semana
+
+```{r comparacao-minuto}
+if (dados_disponiveis) {
+  comparar_tipo_dia(dados)
+}
+```
+
+## Comparacao complementar com medias diarias
+
+```{r comparacao-diaria}
+if (dados_disponiveis) {
+  comparar_medias_diarias(dados)$resumo
+}
+```
+
+A comparacao por medias diarias reduz o peso da dependencia temporal entre
+medicoes consecutivas. Ela nao substitui uma modelagem temporal completa, mas
+oferece uma verificacao mais conservadora do contraste entre grupos.
+
+# Modelagem das distribuicoes
+
+```{r modelagem}
+if (dados_disponiveis) {
+  modelagem <- ajustar_distribuicoes(dados)
+  modelagem$comparacao
+}
+```
+
+```{r parametros}
+if (dados_disponiveis) {
+  parametros_modelo(modelagem)
+}
+```
+
+# Probabilidade de excedencia de 2 kW
+
+```{r probabilidade-2kw}
+if (dados_disponiveis) {
+  probabilidade_acima_2kw(dados, modelagem, limite_kw = 2)
+}
+```
+
+# Graficos
+
+Os graficos originais do trabalho foram preservados em
+`images/graficos-originais/`. Os graficos reprodutiveis gerados por R sao
+salvos em `outputs/figures/` apos executar `scripts/executar_analise.R`.
+
+```{r mostrar-figuras, results='asis'}
+figs <- list.files(here::here("outputs", "figures"), pattern = "\\.png$", full.names = TRUE)
+if (length(figs) == 0) {
+  cat("Nenhum grafico reprodutivel foi gerado ainda.\n")
+} else {
+  for (fig in figs) {
+    cat("![](", normalizePath(fig, winslash = "/"), ")\n\n", sep = "")
+  }
+}
+```
+
+# Limitacoes
+
+As principais limitacoes sao: dados de uma unica residencia, amostragem
+temporal nao aleatoria, periodo historico especifico, autocorrelacao das
+medicoes minuto a minuto, ausencia de variaveis meteorologicas e
+comportamentais, e limitacoes de um ajuste marginal de distribuicao.
+
+# Conclusoes
+
+O trabalho original conclui que o consumo residencial e assimetrico, variavel e
+marcado por picos de demanda. A analise reorganizada neste repositorio permite
+recalcular os resultados, gerar graficos sem capturas da janela do R e comparar
+modelos de forma transparente.
+
+# Instrucoes de reproducao
+
+1. Baixe o dataset no UCI Machine Learning Repository.
+2. Coloque `household_power_consumption.txt` em `data/raw/`.
+3. Execute `source("scripts/preparar_dados.R")`.
+4. Execute `source("scripts/executar_analise.R")`.
+5. Renderize este relatorio com `quarto render analysis/relatorio.qmd`.
+
+# Referencias
+
+UCI Machine Learning Repository. Individual household electric power
+consumption. Disponivel em:
+<https://archive.ics.uci.edu/dataset/235/individual+household+electric+power+consumption>.
+
+Alberge, Eduardo Augusto Rech; Roik, Willian Matheus. Analise estatistica
+aplicada ao perfil de consumo de energia residencial. Trabalho da disciplina de
+Probabilidade e Estatistica Aplicadas (ELB31), Universidade Tecnologica Federal
+do Parana, 2025.
