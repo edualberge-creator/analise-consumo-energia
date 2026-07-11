@@ -57,14 +57,6 @@ descompacte-o e coloque `household_power_consumption.txt` em `data/raw/`.
 - Ajuste por maxima verossimilhanca das distribuicoes Normal, Lognormal e Gamma.
 - Comparacao por log-verossimilhanca, AIC e BIC.
 
-## Principais resultados do trabalho original
-
-O PDF original relata que a potencia ativa global apresenta forte assimetria
-positiva, alta variabilidade e muitos picos de consumo. O setor de
-climatizacao/aquecimento aparece como o maior componente das submedicoes
-monitoradas. O trabalho tambem aponta maior consumo medio aos fins de semana
-e seleciona a distribuicao Lognormal como a melhor entre Normal, Lognormal e
-Gamma.
 
 Os valores numericos deste repositorio sao calculados dinamicamente quando o
 dataset esta disponivel. Consulte os CSVs gerados em `outputs/tables/`.
