@@ -5,10 +5,6 @@ eletrica de uma residencia usando o dataset
 "Individual household electric power consumption", do UCI Machine Learning
 Repository.
 
-Este projeto transforma o trabalho academico original em uma estrutura pronta
-para revisao e publicacao no GitHub:
-
-<https://github.com/SEU-USUARIO/analise-consumo-energia>
 
 ## Resumo
 
